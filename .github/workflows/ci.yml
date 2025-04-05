@@ -84,7 +84,7 @@ jobs:
           do
             cp -a "../build/$TARGET" ./
           done
-          git remote set-url origin "https://${{ secrets.BOT_TOKEN }}@github.com/TypeDuck-HK/fcitx-android-cpp-prebuilt.git"
+          git remote set-url origin "https://${{ secrets.FCITX_BOT_TOKEN }}@github.com/TypeDuck-HK/fcitx-android-cpp-prebuilt.git"
           git config user.name "Fcitx5 Android Bot"
           git config user.email "102923727+fcitx5-android-bot@users.noreply.github.com"
           git add .
