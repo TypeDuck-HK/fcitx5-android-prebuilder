@@ -1,3 +1,55 @@
+# Hints from Copilit-Claude3.7
+
+
+要編譯這個 fcitx5-android-prebuilder 專案，您需要先確保已安裝所有必要的依賴項，然後按照以下步驟進行：
+
+1. 首先，確保您已安裝所有所需的依賴項：
+
+```bash
+# 在 macOS 上安裝基本工具
+brew install bash tar curl git python
+
+# 安裝 Haskell 相關工具
+brew install ghc cabal-install
+cabal install shake aeson-pretty
+
+# 安裝其他必要的依賴項
+brew install fcitx5 libime opencc
+```
+
+2. 確保您已安裝指定版本的 Android NDK (25.2.9519653)：
+
+3. 可以從 Android Studio 的 SDK Manager 下載
+或直接從 Google 的 NDK 下載頁面取得
+配置環境變數：
+
+```bash
+export ANDROID_NDK_HOME=/path/to/your/android-ndk-25.2.9519653
+export PATH=$PATH:$ANDROID_NDK_HOME
+```
+
+4. 編譯專案：
+```bash
+# 進入專案目錄
+cd /Users/leungtsinam/Documents/proj/fcitx5-android-prebuilder
+
+# 使用 cabal 建置
+cabal update
+cabal build
+
+# 執行建置腳本
+cabal run prebuilder -- --help  # 查看可用的編譯選項
+cabal run prebuilder -- all     # 編譯所有函式庫
+```
+
+如果您想要單獨編譯特定的函式庫，可以替換最後的 all 參數，例如：
+```bash
+cabal run prebuilder -- boost fmt  # 只編譯 boost 和 fmt 函式庫
+```
+
+編譯完成後，生成的靜態函式庫應該會出現在專案的 build 或 output 目錄中，可以用於 fcitx5-android 專案。
+
+
 # prebuilder
 
 Build static libraries for [fcitx5-android](https://github.com/fcitx5-android/fcitx5-android).
