@@ -66,16 +66,16 @@ jobs:
         with:
           path: build/prebuilt.tar.zst
 
-      - name: Fetch fcitx5-android/prebuilt
+      - name: Fetch TypeDuck-HK/fcitx-android-cpp-prebuilt
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: actions/checkout@v3
         with:
           path: prebuilt
-          repository: fcitx5-android/prebuilt
+          repository: TypeDuck-HK/fcitx-android-cpp-prebuilt
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Push to fcitx5-android/prebuilt
+      - name: Push to TypeDuck-HK/fcitx-android-cpp-prebuilt
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         working-directory: prebuilt
         run: |
