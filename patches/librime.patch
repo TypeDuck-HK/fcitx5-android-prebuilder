@@ -1,16 +1,3 @@
-From ce073f95ba26d5125c98dbf833ccd518b2abbffe Mon Sep 17 00:00:00 2001
-From: Chiram <liangzinan21@hotmail.com>
-Date: Wed, 16 Apr 2025 11:58:12 +0000
-Subject: [PATCH] fcitx-android-patch
-
----
- src/CMakeLists.txt | 2 ++
- src/rime/engine.cc | 1 -
- src/rime/engine.h  | 2 ++
- src/rime/service.h | 4 ++--
- src/rime_api.cc    | 9 +++++++++
- 5 files changed, 15 insertions(+), 3 deletions(-)
-
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
 index f7594089..e1e44535 100644
 --- a/src/CMakeLists.txt
@@ -20,7 +7,7 @@ index f7594089..e1e44535 100644
  else()
    add_library(rime-static STATIC ${rime_src})
 +  target_compile_options(rime-static PRIVATE "-ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")
-+  target_compile_definitions(rime-static PRIVATE BOOST_DISABLE_CURRENT_LOCATION)
++  target_compile_definitions(rime-static PRIVATE BOOST_DISABLE_CURRENT_LOCATION BOOST_ALL_NO_EMBEDDED_GDB_SCRIPTS)
    target_link_libraries(rime-static ${rime_deps})
    set_target_properties(rime-static PROPERTIES
      OUTPUT_NAME "rime" PREFIX "lib"
@@ -101,6 +88,3 @@ index 8109da74..7cc7775f 100644
  }
  
  RIME_API Bool RimeGetOption(RimeSessionId session_id, const char* option) {
--- 
-2.49.0
-

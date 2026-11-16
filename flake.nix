@@ -42,11 +42,6 @@
         buildInputs = old.buildInputs ++ [
           fcitx5
           opencc
-          autoconf
-          automake
-          pkg-config
-          libtool
-          check
           zstd
           boost
         ] ++ prebuilderShell.buildInputs;

@@ -22,23 +22,13 @@ executable prebuilder
   other-modules:
     Base
     CMakeBuilder
-    Rules.AnthyData
     Rules.Boost
-    Rules.Fcitx5Data
-    Rules.Fmt
+    Rules.Fcitx5
     Rules.GLog
     Rules.LevelDB
-    Rules.LibChewing
     Rules.LibUV
-    Rules.LibHangul
-    Rules.LibIME
-    Rules.LibIMEJyutping
-    Rules.LibIconv
     Rules.LibIntlLite
     Rules.LibRime
-    Rules.LibThai
-    Rules.Lua
     Rules.Marisa
     Rules.OpenCC
     Rules.YAMLCpp
-    Rules.ZSTD

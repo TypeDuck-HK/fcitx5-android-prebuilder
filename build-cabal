@@ -24,7 +24,7 @@ CABVER=( ${CABVERSTR//./ } )
 
 if [ "${CABVER[0]}" -gt 2 -o "${CABVER[0]}" -eq 2 -a "${CABVER[1]}" -ge 2 ];
 then
-    "$CABAL" build "${CABFLAGS[@]}" -j exe:prebuilder
+    "$CABAL" build "${CABFLAGS[@]}" -j4 exe:prebuilder
     # use exec instead of new-run to make sure that the libime tools can be accessed
     "$CABAL" exec "${CABFLAGS[@]}" prebuilder -- "$@"
 else

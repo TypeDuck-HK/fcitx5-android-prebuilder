@@ -69,7 +69,9 @@ data CmakeBuilder q = CmakeBuilder
     doInstall :: Bool,
     -- | path the cmake file
     -- if not specified, run cmake in source dir
-    cmakeFile :: Maybe FilePath
+    cmakeFile :: Maybe FilePath,
+    -- | Additional cmake environment variables
+    cmakeEnv :: BuildEnv -> [(String, String)]
   }
 
 cmakeBuilder :: String -> CmakeBuilder b
@@ -83,7 +85,8 @@ cmakeBuilder name =
       source = const $ pure name,
       name = name,
       doInstall = True,
-      cmakeFile = Nothing
+      cmakeFile = Nothing,
+      cmakeEnv = const mempty
     }
 
 useCMake ::
@@ -107,14 +110,17 @@ useCMake CmakeBuilder {..} = addOracle $ \(WithAndroidEnv q env) -> do
     forM_ abiList $ \a -> do
       let bEnv@BuildEnv {..} = buildEnv a
       unBuildActionABI preBuildEachABI q bEnv
+      let cmakeEnvOptions = [AddEnv k v | (k, v) <- cmakeEnv bEnv]
       cmd_
         (Cwd src)
-        (AddPath [] [ ninja ])
+        cmakeEnvOptions
         cmake
         "-B"
         buildEnvBuildDir
-        "-GNinja"
+        "-G"
+        "Ninja"
         ( [ "-DCMAKE_TOOLCHAIN_FILE=" <> toolchain,
+            "-DCMAKE_MAKE_PROGRAM=" <> ninja,
             "-DANDROID_ABI=" <> a,
             "-DANDROID_PLATFORM=" <> show (platform env),
             "-DANDROID_STL=c++_shared",
@@ -124,7 +130,7 @@ useCMake CmakeBuilder {..} = addOracle $ \(WithAndroidEnv q env) -> do
             <> cmakeFlags bEnv
         )
         (maybeToList cmakeFile)
-      cmd_ (Cwd src) cmake "--build" buildEnvBuildDir
+      cmd_ (Cwd src) cmakeEnvOptions cmake "--build" buildEnvBuildDir
       when doInstall $
         cmd_ (Cwd src) cmake "--install" buildEnvBuildDir
       unBuildActionABI postBuildEachABI q bEnv

@@ -1,43 +1,29 @@
-{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeFamilies #-}
 
 module Main where
 
 import Base
 import Data.Aeson qualified as A
 import Data.Aeson.Encode.Pretty qualified as A
-import Data.List.Extra (dropWhileEnd, find, isPrefixOf, split)
+import Data.List.Extra (trim, find, isPrefixOf, split)
 import Data.String (fromString)
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TLB
 import Development.Shake.Config
-import Rules.AnthyData
 import Rules.Boost
-import Rules.Fcitx5Data
-import Rules.Fmt
+import Rules.Fcitx5
 import Rules.GLog
 import Rules.LevelDB
-import Rules.LibChewing
-import Rules.LibUV
-import Rules.LibIconv
-import Rules.LibHangul
-import Rules.LibIME
-import Rules.LibIMEJyutping
 import Rules.LibIntlLite
 import Rules.LibRime
-import Rules.LibThai
-import Rules.Lua
+import Rules.LibUV
 import Rules.Marisa
 import Rules.OpenCC
 import Rules.YAMLCpp
-import Rules.ZSTD
 
---------------------------------------------------------------------------------
 main :: IO ()
-main = do
-  -- don't use shakeArgs since it applies withoutActions on our rule
+main =
   shakeArgsWith
     shakeOptions
       { shakeReport = ["report.html"],
@@ -49,129 +35,39 @@ main = do
       want files
       usingConfigFile "build.cfg"
       downloadFileRule
+      hostFcitx5Rule
       spellDictRule
-      libIMERule
-      chineseAddonsRule
-      libIMEJyutpingRule
-      fmtRule
       libuvRule
       libintlLiteRule
-      luaRule
+      hostOpenCCRule
       openccRule
       boostRule
-      zstdRule
-      hostLibzstdRule
       glogRule
       yamlCppRule
       leveldbRule
+      marisaSourceRule
+      hostMarisaRule
       marisaRule
       librimeRule
-      libhangulRule
-      libchewingRule
-      libthaiRule
-      libiconvRule
-      anthyDictRule
       isInGitHubActionRule
       getOutputDirRule
       "everything" ~> do
         let artifacts =
-              [ "spell-dict",
-                "libime",
-                "fmt",
-                "chinese-addons-data",
-                "libime-jyutping",
+              [ "boost",
                 "libuv",
                 "libintl-lite",
-                "lua",
                 "opencc",
-                "boost",
-                "zstd",
                 "glog",
                 "yaml-cpp",
                 "leveldb",
                 "marisa",
                 "librime",
-                "libhangul",
-                "chewing-dict",
-                "libchewing",
-                "libthai",
-                "libiconv",
-                "anthy-dict"
+                "spell-dict"
               ]
         need artifacts
-        writeFileLines (outputDir </> "artifacts.txt") ("toolchain-versions.json" : artifacts)
         getToolchainVersions >>= writeFile' (outputDir </> "toolchain-versions.json") . TL.unpack . TLB.toLazyText . A.encodePrettyToTextBuilder
-      "fcitx5" ~> do
-        need
-          [ "fmt",
-            "libuv",
-            "libintl-lite"
-          ]
-      "app" ~> do
-        need
-          [ "fcitx5",
-            "spell-dict",
-            "libime",
-            "chinese-addons-data",
-            "lua",
-            "opencc",
-            "boost",
-            "zstd"
-          ]
-      "anthy" ~> do
-        need
-          [ "fcitx5",
-            "anthy-dict"
-          ]
-      "chewing" ~> do
-        need
-          [ "fcitx5",
-            "libchewing",
-            "chewing-dict"
-          ]
-      "hangul" ~> do
-        need
-          [ "fcitx5",
-            "libhangul"
-          ]
-      "jyutping" ~> do
-        need
-          [ "fcitx5",
-            "libime-jyutping",
-            "lua",
-            "opencc",
-            "boost",
-            "zstd"
-          ]
-      "rime" ~> do
-        need
-          [ "fcitx5",
-            "librime"
-          ]
-      "sayura" ~> do
-        need
-          [ "fcitx5"
-          ]
-      "thai" ~> do
-        need
-          [ "fcitx5",
-            "libthai",
-            "libiconv"
-          ]
-      "unikey" ~> do
-        need
-          [ "fcitx5"
-          ]
-      "clean" ~> do
-        removeFilesAfter outputDir ["//*"]
-        cmd_ "git" "submodule" "foreach" "--recursive" "git" "reset" "--hard"
-        cmd_ "git" "submodule" "foreach" "--recursive" "git" "clean" "-x" "-f" "-d"
-
-      action $
-        whenM isInGitHubAction $
-          writeGitHubBuildSummary ["### Build Summary :rocket:"]
-
---------------------------------------------------------------------------------
+        writeFileLines (outputDir </> "artifacts.txt") (artifacts <> ["toolchain-versions.json"])
+      "clean" ~> removeFilesAfter outputDir ["//*"]
 
 data ToolchainVersions = ToolchainVersions
   { prebuilderRev :: String,
@@ -196,8 +92,7 @@ getToolchainVersions = do
   properties <- readFileLines $ ndkRoot </> "source.properties"
   ndkVersion <- case find ("Pkg.Revision" `isPrefixOf`) properties of
     Just line
-      | [_, ndkVersion] <- split (== '=') line ->
-          pure $ dropWhileEnd (== ' ') ndkVersion
+      | [_, ndkVersion] <- split (== '=') line -> pure $ trim ndkVersion
       | otherwise -> fail "Failed to parse Pkg.Revision"
     Nothing -> fail "Pkg.Revision not found in source.properties"
   pure ToolchainVersions {..}

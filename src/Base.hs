@@ -119,7 +119,7 @@ getSdkCMake :: AndroidEnv -> FilePath
 getSdkCMake AndroidEnv {..} = sdkRoot </> "cmake" </> sdkCMakeVersion </> "bin" </> "cmake"
 
 getSdkNinja :: AndroidEnv -> FilePath
-getSdkNinja AndroidEnv {..} = sdkRoot </> "cmake" </> sdkCMakeVersion </> "bin"
+getSdkNinja AndroidEnv {..} = sdkRoot </> "cmake" </> sdkCMakeVersion </> "bin" </> "ninja"
 
 getABIList :: AndroidEnv -> [String]
 getABIList AndroidEnv {..} = split (== ',') abi
@@ -173,8 +173,8 @@ execute :: String -> (CmdArguments args) => args :-> Action ()
 execute tool =
   cmdArguments
     ( CmdArgument
-        [ Right (outputDir </> "bin" </> tool),
-          Left (AddEnv "LD_LIBRARY_PATH" (outputDir </> "lib"))
+        [ Right (outputDir </> "host" </> "bin" </> tool),
+          Left (AddEnv "LD_LIBRARY_PATH" (outputDir </> "host" </> "lib"))
         ]
     )
 

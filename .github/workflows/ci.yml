@@ -11,35 +11,31 @@ jobs:
     container: archlinux:base-devel
     env:
       ABI: "armeabi-v7a,arm64-v8a,x86,x86_64"
-      NDK_VERSION: "25.2.9519653"
-      CMAKE_VERSION: "3.22.1"
+      NDK_VERSION: "28.0.13004108"
+      CMAKE_VERSION: "3.31.6"
       ANDROID_PLATFORM: "23"
+      CMAKE_BUILD_PARALLEL_LEVEL: "4"
 
     steps:
       - name: Install build dependencies
         run: |
           pacman -Syu --needed --noconfirm \
-            git unzip ghc cabal-install haskell-shake haskell-aeson-pretty \
-            cmake extra-cmake-modules ninja fmt fcitx5 boost python opencc jre-openjdk gperf
+            git unzip jre-openjdk \
+            ghc cabal-install haskell-shake haskell-aeson-pretty \
+            cmake extra-cmake-modules ninja python boost boost-libs zstd
 
       - name: Fetch source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
-          # this only sync submodules specified in .gitmodules,
-          # because we don't want recursive submodules in glog, librime, etc.
           submodules: true
 
-      - name: Fetch submodules
+      - name: Fetch required Rime plugin
         run: |
-          # it appears to be a bug when building in containers: https://github.com/actions/checkout/issues/915
           git config --global --add safe.directory '*'
-          # fetch libime submodule kenlm since it's not in .gitmodules
-          git submodule update --init --recursive libime
-          # fetch librime plugin under submodule
-          git submodule update --init --recursive librime
+          git -C librime submodule update --init plugins/rime-dictionary-lookup-filter
 
       - name: Setup Android NDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           packages: "ndk;${{ env.NDK_VERSION }} cmake;${{ env.CMAKE_VERSION }}"
 
@@ -47,48 +43,47 @@ jobs:
         env:
           ANDROID_NDK_ROOT: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
         run: |
-          # use archlinux's dynamic only ghc
           cabal configure --disable-library-vanilla --enable-shared --enable-executable-dynamic --ghc-options=-dynamic
-          ./build-cabal -j everything
+          ./build-cabal -j4 everything
 
       - name: Pack prebuilt libraries
         if: github.event_name == 'pull_request'
         run: |
           cd build
           mkdir prebuilt
-          for TARGET in $(<artifacts.txt)
+          while read -r TARGET
           do
             cp -a "$TARGET" prebuilt/
-          done
+          done < artifacts.txt
           tar --zstd -cf prebuilt.tar.zst prebuilt/
 
       - name: Upload prebuilt to artifact
         if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: build/prebuilt.tar.zst
+          archive: false
 
-      - name: Fetch TypeDuck-HK/fcitx-android-cpp-prebuilt
+      - name: Fetch TypeDuck prebuilts
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           path: prebuilt
           repository: TypeDuck-HK/fcitx-android-cpp-prebuilt
-          fetch-depth: 0
-          persist-credentials: false
+          ref: main
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
-      - name: Push to TypeDuck-HK/fcitx-android-cpp-prebuilt
+      - name: Update TypeDuck prebuilts
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         working-directory: prebuilt
         run: |
           rm -r ./*
-          for TARGET in $(<../build/artifacts.txt)
+          while read -r TARGET
           do
             cp -a "../build/$TARGET" ./
-          done
-          git remote set-url origin "https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/TypeDuck-HK/fcitx-android-cpp-prebuilt.git"
+          done < ../build/artifacts.txt
           git config user.name "Fcitx5 Android Bot"
           git config user.email "102923727+fcitx5-android-bot@users.noreply.github.com"
           git add .
           git diff-index --quiet HEAD || git commit -m "Auto update"
-          git push --set-upstream origin "HEAD:master" --follow-tags --atomic
+          git push --set-upstream origin "HEAD:main" --follow-tags --atomic
