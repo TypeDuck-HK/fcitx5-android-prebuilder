@@ -34,6 +34,7 @@ hostFcitx5Rule = do
       [ "-DCMAKE_BUILD_TYPE=Release",
         "-DCMAKE_INSTALL_PREFIX=" <> hostPrefix,
         "-DCMAKE_FIND_ROOT_PATH=" <> hostPrefix,  -- for find_package
+        "-DEVENT_LOOP_BACKEND=none",
         "-DENABLE_TEST=OFF",
         "-DENABLE_COVERAGE=OFF",
         "-DENABLE_ENCHANT=OFF",
