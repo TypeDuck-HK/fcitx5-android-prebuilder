@@ -23,7 +23,7 @@ jobs:
       - name: Install build dependencies
         run: |
           pacman -Syu --needed --noconfirm \
-            git openssh unzip jre-openjdk \
+            git openssh unzip jre-openjdk jq \
             ghc cabal-install haskell-shake haskell-aeson-pretty \
             cmake extra-cmake-modules ninja python boost boost-libs zstd
 
@@ -91,6 +91,15 @@ jobs:
           done < ../build/artifacts.txt
           git config user.name "Fcitx5 Android Bot"
           git config user.email "102923727+fcitx5-android-bot@users.noreply.github.com"
+          git config diff.toolchain.textconv 'jq -S "del(.prebuilder)"'
+          mkdir -p .git/info
+          echo 'toolchain-versions.json diff=toolchain' >> .git/info/attributes
           git add .
-          git diff-index --quiet HEAD || git commit -m "Auto update"
+          # Compute the content diff: Don't add --quiet and --name-only as they bypass textconv.
+          if [ -z "$(git diff --cached --textconv)" ]; then
+            echo "Already up to date."
+            exit 0
+          fi
+          source_revision=$(git -C .. rev-parse HEAD)
+          git commit -m "Generate TypeDuck native dependencies from $source_revision"
           git push --set-upstream origin "HEAD:main" --follow-tags --atomic
