@@ -37,6 +37,19 @@ jobs:
           git config --global --add safe.directory '*'
           git -C librime submodule update --init plugins/rime-dictionary-lookup-filter
 
+      - name: Fetch TypeDuck prebuilts
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/checkout@v6
+        with:
+          path: prebuilt
+          repository: TypeDuck-HK/fcitx-android-cpp-prebuilt
+          ssh-key: ${{ secrets.PREBUILT_SSH_KEY }}
+
+      - name: Verify prebuilt publishing access
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: prebuilt
+        run: git push --dry-run origin HEAD
+
       - name: Setup Android NDK
         uses: android-actions/setup-android@v4
         with:
@@ -66,14 +79,6 @@ jobs:
         with:
           path: build/prebuilt.tar.zst
           archive: false
-
-      - name: Fetch TypeDuck prebuilts
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/checkout@v6
-        with:
-          path: prebuilt
-          repository: TypeDuck-HK/fcitx-android-cpp-prebuilt
-          ssh-key: ${{ secrets.PREBUILT_SSH_KEY }}
 
       - name: Update TypeDuck prebuilts
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
