@@ -32,6 +32,7 @@ librimeRule = do
               "-DBUILD_TEST=OFF",
               "-DBUILD_DATA=OFF",
               "-DBUILD_MERGED_PLUGINS=ON",
+              "-DCMAKE_CXX_FLAGS=-ffile-prefix-map=" <> (takeDirectory buildEnvOut </> buildEnvSrc) <> "=.",
               "-DALSO_LOG_TO_STDERR=ON",
               "-DCMAKE_FIND_ROOT_PATH="
                 <> intercalate
