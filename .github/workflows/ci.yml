@@ -2,8 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -65,16 +68,15 @@ jobs:
           archive: false
 
       - name: Fetch TypeDuck prebuilts
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/checkout@v6
         with:
           path: prebuilt
           repository: TypeDuck-HK/fcitx-android-cpp-prebuilt
-          ref: main
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          ssh-key: ${{ secrets.PREBUILT_SSH_KEY }}
 
       - name: Update TypeDuck prebuilts
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         working-directory: prebuilt
         run: |
           rm -r ./*
